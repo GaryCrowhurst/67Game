@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>67 World - Defeat the Kings!</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
@@ -19,6 +20,9 @@
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
+            touch-action: none;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
         
         #gameContainer {
@@ -26,11 +30,17 @@
             box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
             border-radius: 10px;
             overflow: hidden;
+            max-width: 100vw;
+            max-height: 100vh;
         }
         
         canvas {
             display: block;
             background: #0a0e27;
+            max-width: 100%;
+            max-height: 100vh;
+            width: 100%;
+            height: auto;
         }
         
         #ui {
@@ -60,6 +70,7 @@
             display: none;
             z-index: 20;
             border: 3px solid #00ffff;
+            max-width: 90vw;
         }
         
         .level-title {
@@ -116,6 +127,12 @@
             font-size: 16px;
             margin: 20px 0;
             text-align: center;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .name-input::placeholder {
+            color: rgba(255,255,255,0.6);
         }
         
         .power-up-display {
@@ -158,6 +175,7 @@
             display: none;
             z-index: 20;
             border: 3px solid #ff0000;
+            max-width: 90vw;
         }
         
         #victory {
@@ -173,6 +191,177 @@
             display: none;
             z-index: 20;
             border: 3px solid #00ff00;
+            max-width: 90vw;
+        }
+        
+        #leaderboard {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            display: none;
+            z-index: 30;
+            border: 3px solid #00ffff;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 500px;
+        }
+        
+        .mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 10px;
+            z-index: 15;
+        }
+        
+        .joystick {
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid #00ffff;
+            border-radius: 50%;
+            position: relative;
+            touch-action: none;
+        }
+        
+        .joystick-inner {
+            width: 50px;
+            height: 50px;
+            background: #00ffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s;
+        }
+        
+        .fire-button {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 0, 0, 0.7);
+            border: 3px solid #ff0000;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            z-index: 15;
+            touch-action: none;
+            user-select: none;
+        }
+        
+        .fire-button:active {
+            background: rgba(255, 0, 0, 1);
+            transform: scale(0.95);
+        }
+        
+        .fire-button.auto-fire {
+            animation: pulse 0.5s infinite;
+            background: rgba(138, 43, 226, 0.8);
+            border-color: #8a2be2;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @media (max-width: 768px) {
+            #ui {
+                font-size: 14px;
+                padding: 10px;
+                min-width: auto;
+            }
+            
+            #controls {
+                display: none;
+            }
+            
+            .mobile-controls {
+                display: flex;
+            }
+            
+            .fire-button {
+                display: flex;
+            }
+            
+            #gameOver, #victory, #leaderboard, #levelComplete {
+                padding: 20px;
+                font-size: 14px;
+                width: 90%;
+            }
+            
+            #gameOver p, #victory p, #leaderboard p, #levelComplete p {
+                font-size: 14px !important;
+            }
+            
+            h1 {
+                font-size: 24px !important;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+                margin: 5px;
+            }
+            
+            canvas {
+                width: 100vw !important;
+                height: 100vh !important;
+                object-fit: contain;
+            }
+            
+            #gameContainer {
+                border-radius: 0;
+            }
+            
+            #leaderboardBtn {
+                bottom: 150px !important;
+                right: 10px !important;
+            }
+            
+            #leaderboardBtn .btn {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                padding: 0;
+                font-size: 24px;
+            }
+            
+            .power-up-display {
+                top: auto !important;
+                bottom: 160px !important;
+                right: 10px !important;
+                font-size: 12px;
+                padding: 8px;
+            }
+            
+            .leaderboard-entry {
+                font-size: 12px;
+                padding: 8px;
+            }
+            
+            .rank {
+                width: 30px;
+                font-size: 12px;
+            }
+            
+            .level-title {
+                font-size: 28px !important;
+            }
         }
         
         .btn {
@@ -236,9 +425,17 @@
             <span style="font-size: 12px; color: #ffff00;">Fight the 67 Hand Army! (palms up, see-saw motion)</span>
         </div>
         
-        <div style="position: absolute; bottom: 10px; right: 10px; z-index: 10;">
-            <button class="btn" style="padding: 10px 20px; font-size: 14px;" onclick="showLeaderboard()">🏆 Leaderboard</button>
+        <div style="position: absolute; bottom: 10px; right: 10px; z-index: 10;" id="leaderboardBtn">
+            <button class="btn" style="padding: 10px 20px; font-size: 14px;" onclick="showLeaderboard()">🏆</button>
         </div>
+        
+        <div class="mobile-controls">
+            <div class="joystick" id="joystick">
+                <div class="joystick-inner" id="joystickInner"></div>
+            </div>
+        </div>
+        
+        <div class="fire-button" id="fireButton">🔫</div>
         
         <div id="powerUpDisplay" class="power-up-display">
             <div id="powerUpText">⚡ POWER-UP ACTIVE</div>
@@ -343,6 +540,10 @@
         // Keys pressed
         const keys = {};
         let shootCooldown = 0;
+        
+        // Mobile controls
+        let joystickActive = false;
+        let joystickDirection = { x: 0, y: 0 };
         
         // Bullets
         const bullets = [];
@@ -720,6 +921,10 @@
                     shoot();
                     gameState.autoFireTimer = 0;
                 }
+                // Visual feedback on mobile fire button
+                fireButton.classList.add('auto-fire');
+            } else {
+                fireButton.classList.remove('auto-fire');
             }
             
             // Rapid fire (reduce delay between shots in click handler)
@@ -767,10 +972,17 @@
         
         // Update player
         function updatePlayer() {
+            // Keyboard controls
             if (keys['w'] || keys['ArrowUp']) player.y -= player.speed;
             if (keys['s'] || keys['ArrowDown']) player.y += player.speed;
             if (keys['a'] || keys['ArrowLeft']) player.x -= player.speed;
             if (keys['d'] || keys['ArrowRight']) player.x += player.speed;
+            
+            // Joystick controls (mobile)
+            if (joystickActive) {
+                player.x += joystickDirection.x * player.speed;
+                player.y += joystickDirection.y * player.speed;
+            }
             
             // Boundaries
             player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
@@ -1331,6 +1543,10 @@
         }
         
         function showLeaderboard() {
+            // Hide game over and victory screens
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('victory').style.display = 'none';
+            
             const leaderboard = getLeaderboard();
             const currentScore = gameState.score;
             
@@ -1458,8 +1674,11 @@
         
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            mouse.x = e.clientX - rect.left;
-            mouse.y = e.clientY - rect.top;
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            mouse.x = (e.clientX - rect.left) * scaleX;
+            mouse.y = (e.clientY - rect.top) * scaleY;
         });
         
         canvas.addEventListener('click', () => {
@@ -1472,6 +1691,108 @@
                     shootCooldown = 15; // Normal shooting
                 }
             }
+        });
+        
+        // Touch controls for mobile
+        const joystick = document.getElementById('joystick');
+        const joystickInner = document.getElementById('joystickInner');
+        const fireButton = document.getElementById('fireButton');
+        
+        // Joystick touch handling
+        function handleJoystickStart(e) {
+            e.preventDefault();
+            joystickActive = true;
+        }
+        
+        function handleJoystickMove(e) {
+            if (!joystickActive) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const rect = joystick.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            let deltaX = touch.clientX - centerX;
+            let deltaY = touch.clientY - centerY;
+            
+            // Limit to joystick radius
+            const maxDistance = 35;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            if (distance > maxDistance) {
+                deltaX = (deltaX / distance) * maxDistance;
+                deltaY = (deltaY / distance) * maxDistance;
+            }
+            
+            // Update visual
+            joystickInner.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+            
+            // Update direction (normalized)
+            joystickDirection.x = deltaX / maxDistance;
+            joystickDirection.y = deltaY / maxDistance;
+        }
+        
+        function handleJoystickEnd(e) {
+            e.preventDefault();
+            joystickActive = false;
+            joystickDirection = { x: 0, y: 0 };
+            joystickInner.style.transform = 'translate(-50%, -50%)';
+        }
+        
+        joystick.addEventListener('touchstart', handleJoystickStart);
+        joystick.addEventListener('touchmove', handleJoystickMove);
+        joystick.addEventListener('touchend', handleJoystickEnd);
+        joystick.addEventListener('touchcancel', handleJoystickEnd);
+        
+        // Fire button handling
+        fireButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState.running && shootCooldown === 0) {
+                shoot();
+                if (gameState.activePowerUp === 'rapidfire') {
+                    shootCooldown = 5;
+                } else {
+                    shootCooldown = 15;
+                }
+            }
+        });
+        
+        // Canvas touch for aiming and shooting (tap to shoot at location)
+        canvas.addEventListener('touchstart', (e) => {
+            if (!gameState.running) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            mouse.x = (touch.clientX - rect.left) * scaleX;
+            mouse.y = (touch.clientY - rect.top) * scaleY;
+            
+            // Auto-shoot when touching canvas
+            if (shootCooldown === 0) {
+                shoot();
+                if (gameState.activePowerUp === 'rapidfire') {
+                    shootCooldown = 5;
+                } else {
+                    shootCooldown = 15;
+                }
+            }
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (!gameState.running) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            mouse.x = (touch.clientX - rect.left) * scaleX;
+            mouse.y = (touch.clientY - rect.top) * scaleY;
         });
         
         // Initialize and start game
