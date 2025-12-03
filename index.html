@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>67 World - Defeat the Kings!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            background: #0a0e27;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            z-index: 10;
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 280px;
+        }
+        
+        #levelComplete {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,100,0.95);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            display: none;
+            z-index: 20;
+            border: 3px solid #00ffff;
+        }
+        
+        .level-title {
+            font-size: 48px;
+            color: #00ffff;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+        
+        #leaderboard {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            display: none;
+            z-index: 20;
+            border: 3px solid #00ffff;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        
+        .leaderboard-entry.current {
+            background: rgba(0,255,255,0.3);
+            border: 2px solid #00ffff;
+        }
+        
+        .rank {
+            font-weight: bold;
+            color: #ffff00;
+            width: 40px;
+        }
+        
+        .name-input {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid #00ffff;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .power-up-display {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 8px;
+            color: #ffff00;
+            font-size: 14px;
+            display: none;
+            z-index: 10;
+            border: 2px solid #ffff00;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: #00ffff;
+            font-size: 14px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            z-index: 10;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            display: none;
+            z-index: 20;
+            border: 3px solid #ff0000;
+        }
+        
+        #victory {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,50,0,0.95);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: #00ff00;
+            display: none;
+            z-index: 20;
+            border: 3px solid #00ff00;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            font-size: 36px;
+        }
+        
+        .stat {
+            margin: 5px 0;
+        }
+        
+        .health-bar {
+            width: 150px;
+            height: 20px;
+            background: #333;
+            border: 2px solid #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6b6b);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1000" height="700"></canvas>
+        
+        <div id="ui">
+            <div class="stat" style="font-size: 16px; color: #00ffff; margin-bottom: 8px;"><span id="level">1</span></div>
+            <div class="stat">❤️ Health: <span id="health">100</span></div>
+            <div class="health-bar">
+                <div class="health-fill" id="healthBar" style="width: 100%"></div>
+            </div>
+            <div class="stat">💀 Enemies: <span id="minionsKilled">0</span> / <span id="totalEnemies">5</span></div>
+            <div class="stat">🎯 Score: <span id="score">0</span></div>
+        </div>
+        
+        <div id="controls">
+            🎮 WASD/Arrows: Move | Mouse: Aim | Click: Shoot<br>
+            <span style="font-size: 12px; color: #ffff00;">Fight the 67 Hand Army! (palms up, see-saw motion)</span>
+        </div>
+        
+        <div style="position: absolute; bottom: 10px; right: 10px; z-index: 10;">
+            <button class="btn" style="padding: 10px 20px; font-size: 14px;" onclick="showLeaderboard()">🏆 Leaderboard</button>
+        </div>
+        
+        <div id="powerUpDisplay" class="power-up-display">
+            <div id="powerUpText">⚡ POWER-UP ACTIVE</div>
+            <div id="powerUpTimer" style="font-size: 12px; margin-top: 5px;">Time: 0s</div>
+        </div>
+        
+        <div id="leaderboard">
+            <h1 style="color: #ffff00; margin-bottom: 20px;">🏆 67 LEADERBOARD 🏆</h1>
+            <div id="leaderboardList"></div>
+            <input type="text" id="playerName" class="name-input" placeholder="Enter your name (67!)" maxlength="20">
+            <button class="btn" onclick="saveScore()">Save Score</button>
+            <button class="btn" style="background: #666; margin-left: 10px;" onclick="closeLeaderboard()">Close</button>
+        </div>
+        
+        <div id="levelComplete">
+            <div class="level-title">67! Level Complete!</div>
+            <p style="font-size: 20px; margin: 20px 0;">Six Seven! 🙌</p>
+            <p style="font-size: 18px;">Score: <span id="levelScore">0</span></p>
+            <p style="font-size: 16px; color: #00ff00; margin-top: 10px;">+50 Health Restored</p>
+            <p style="font-size: 12px; color: #ffff00; margin-top: 10px; font-style: italic;">💡 Collect power-ups for special abilities!</p>
+            <button class="btn" onclick="nextLevel()">Next Level (Let's go 67!)</button>
+        </div>
+        
+        <div id="gameOver">
+            <h1>💀 67... GAME OVER! 💀</h1>
+            <p style="font-size: 20px; margin: 20px 0;">The 67 Hand Army was too strong!</p>
+            <p style="font-size: 16px; color: #ff6b6b;">They kept saying "six seven" until you fell...</p>
+            <p style="font-size: 18px; margin-top: 15px;">Score: <span id="finalScore">0</span></p>
+            <button class="btn" onclick="location.reload()">Try Again (67!)</button>
+            <button class="btn" style="background: #ff9900; margin-left: 10px;" onclick="showLeaderboard()">View Leaderboard 🏆</button>
+        </div>
+        
+        <div id="victory">
+            <h1>🎉 67! 67! 67! 🎉</h1>
+            <p style="font-size: 24px; margin: 20px 0; color: #ffff00;">VICTORY!</p>
+            <p style="font-size: 18px;">You defeated the 67 KING and 67 QUEEN!</p>
+            <p style="font-size: 16px; margin-top: 10px;">The 67 Hand Army has been defeated!</p>
+            <p style="font-size: 14px; font-style: italic; color: #00ffff;">No more "six seven" for today!</p>
+            <p style="font-size: 22px; margin-top: 20px;">Final Score: <span id="victoryScore">0</span></p>
+            <button class="btn" onclick="location.reload()">Play Again (67!)</button>
+            <button class="btn" style="background: #ff9900; margin-left: 10px;" onclick="showLeaderboard()">View Leaderboard 🏆</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameState = {
+            running: true,
+            score: 0,
+            currentLevel: 1,
+            minionsKilled: 0,
+            totalMinionsThisLevel: 0,
+            bossWarning: null,
+            bossWarningTimer: 0,
+            activePowerUp: null,
+            powerUpTimer: 0,
+            autoFireTimer: 0
+        };
+        
+        // Power-ups
+        const powerUps = [];
+        const powerUpTypes = [
+            { type: 'autofire', color: '#ff00ff', emoji: '🎯', name: 'AUTO-FIRE', duration: 300 },
+            { type: 'speed', color: '#00ffff', emoji: '⚡', name: 'SPEED BOOST', duration: 300 },
+            { type: 'health', color: '#00ff00', emoji: '❤️', name: 'HEALTH PACK', duration: 0 },
+            { type: 'rapidfire', color: '#ff6600', emoji: '🔥', name: 'RAPID FIRE', duration: 300 },
+            { type: 'shield', color: '#ffff00', emoji: '🛡️', name: 'SHIELD', duration: 300 },
+            { type: 'bomb', color: '#ff0000', emoji: '💣', name: '67 BOMB!', duration: 0 }
+        ];
+        
+        // Level definitions
+        const levels = [
+            { enemies: 5, speed: 1.0, health: 20, label: "First Wave", formation: 'scattered' },
+            { enemies: 8, speed: 1.1, health: 25, label: "67 Hands Arrive", formation: 'scattered' },
+            { enemies: 12, speed: 1.2, health: 25, label: "Getting Serious", formation: 'scattered' },
+            { enemies: 15, speed: 1.3, health: 30, label: "67 King Appears!", boss: 'king', formation: 'protect' },
+            { enemies: 20, speed: 1.4, health: 30, label: "King's Army", boss: 'king', formation: 'protect' },
+            { enemies: 20, speed: 1.5, health: 35, label: "67 Queen Joins!", boss: 'both', formation: 'protect' },
+            { enemies: 25, speed: 1.6, health: 35, label: "Royal Guard", boss: 'both', formation: 'protect' },
+            { enemies: 30, speed: 1.7, health: 40, label: "67 Battalion", boss: 'both', formation: 'protect' },
+            { enemies: 35, speed: 1.8, health: 40, label: "Final Defense", boss: 'both', formation: 'protect' },
+            { enemies: 40, speed: 2.0, health: 45, label: "Ultimate Challenge", boss: 'both', formation: 'protect' }
+        ];
+        
+        // Mouse position
+        let mouse = { x: 0, y: 0 };
+        
+        // Player
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: 20,
+            speed: 5,
+            health: 100,
+            maxHealth: 100,
+            color: '#00ffff'
+        };
+        
+        // Keys pressed
+        const keys = {};
+        let shootCooldown = 0;
+        
+        // Bullets
+        const bullets = [];
+        const bulletSpeed = 10;
+        const bulletSize = 5;
+        
+        // Particles
+        const particles = [];
+        const textParticles = []; // For "67!" text when enemies die
+        
+        // Bosses
+        let kingBoss = null;
+        let queenBoss = null;
+        
+        // Minions
+        let minions = [];
+        let animationFrame = 0; // For animating the 67 gesture
+        
+        // Initialize level
+        function initLevel() {
+            minions = [];
+            bullets.length = 0;
+            powerUps.length = 0; // Clear power-ups
+            gameState.minionsKilled = 0;
+            gameState.bossWarning = null;
+            gameState.bossWarningTimer = 0;
+            
+            const levelIndex = Math.min(gameState.currentLevel - 1, levels.length - 1);
+            const levelData = levels[levelIndex];
+            gameState.totalMinionsThisLevel = levelData.enemies;
+            
+            // Initialize bosses if needed
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            if (levelData.boss === 'king' || levelData.boss === 'both') {
+                kingBoss = {
+                    x: levelData.boss === 'both' ? centerX - 100 : centerX,
+                    y: centerY,
+                    size: 40,
+                    health: 250,
+                    maxHealth: 250,
+                    color: '#ff00ff',
+                    label: '67',
+                    title: 'KING',
+                    alive: true,
+                    speed: 0.5
+                };
+                
+                // Show warning for king
+                if (!queenBoss || levelData.boss === 'king') {
+                    gameState.bossWarning = '👑 THE 67 KING HAS ENTERED THE CHAT! 👑';
+                    gameState.bossWarningTimer = 120; // 2 seconds at 60fps
+                }
+            } else {
+                kingBoss = null;
+            }
+            
+            if (levelData.boss === 'queen' || levelData.boss === 'both') {
+                queenBoss = {
+                    x: levelData.boss === 'both' ? centerX + 100 : centerX,
+                    y: centerY,
+                    size: 40,
+                    health: 250,
+                    maxHealth: 250,
+                    color: '#ffff00',
+                    label: '67',
+                    title: 'QUEEN',
+                    alive: true,
+                    speed: 0.5
+                };
+                
+                // Show warning for both
+                if (levelData.boss === 'both' && kingBoss) {
+                    gameState.bossWarning = '👑👑 67 ROYALTY UNITED! PREPARE YOURSELF! 👑👑';
+                    gameState.bossWarningTimer = 120;
+                } else if (levelData.boss === 'queen') {
+                    gameState.bossWarning = '👑 THE 67 QUEEN HAS ARRIVED! 👑';
+                    gameState.bossWarningTimer = 120;
+                }
+            } else {
+                queenBoss = null;
+            }
+            
+            // Spawn minions based on formation
+            if (levelData.formation === 'protect' && (kingBoss || queenBoss)) {
+                // Protective circle around bosses
+                for (let i = 0; i < levelData.enemies; i++) {
+                    const angle = (Math.PI * 2 * i) / levelData.enemies;
+                    const radius = 150 + (i % 3) * 50; // Multiple rings
+                    
+                    minions.push({
+                        x: centerX + Math.cos(angle) * radius,
+                        y: centerY + Math.sin(angle) * radius,
+                        size: 18,
+                        health: levelData.health,
+                        maxHealth: levelData.health,
+                        color: '#ff6b6b',
+                        speed: levelData.speed,
+                        alive: true,
+                        angle: angle // For drawing the hand rotation
+                    });
+                }
+            } else {
+                // Scattered from edges
+                for (let i = 0; i < levelData.enemies; i++) {
+                    const side = Math.floor(Math.random() * 4);
+                    let x, y;
+                    
+                    switch(side) {
+                        case 0: // Top
+                            x = Math.random() * canvas.width;
+                            y = -20;
+                            break;
+                        case 1: // Right
+                            x = canvas.width + 20;
+                            y = Math.random() * canvas.height;
+                            break;
+                        case 2: // Bottom
+                            x = Math.random() * canvas.width;
+                            y = canvas.height + 20;
+                            break;
+                        case 3: // Left
+                            x = -20;
+                            y = Math.random() * canvas.height;
+                            break;
+                    }
+                    
+                    minions.push({
+                        x: x,
+                        y: y,
+                        size: 18,
+                        health: levelData.health,
+                        maxHealth: levelData.health,
+                        color: '#ff6b6b',
+                        speed: levelData.speed,
+                        alive: true,
+                        angle: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+            
+            // Reset player position
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            
+            // Move player away from bosses if they exist
+            if (kingBoss || queenBoss) {
+                player.x = 100;
+                player.y = 100;
+            }
+        }
+        
+        // Next level
+        function nextLevel() {
+            gameState.currentLevel++;
+            
+            if (gameState.currentLevel > levels.length) {
+                // Victory!
+                document.getElementById('levelComplete').style.display = 'none';
+                document.getElementById('victoryScore').textContent = gameState.score;
+                document.getElementById('victory').style.display = 'block';
+                return;
+            }
+            
+            // Restore some health
+            player.health = Math.min(player.maxHealth, player.health + 50);
+            
+            document.getElementById('levelComplete').style.display = 'none';
+            gameState.running = true;
+            initLevel();
+            gameLoop();
+        }
+        
+        // Level complete
+        function levelComplete() {
+            gameState.running = false;
+            document.getElementById('levelScore').textContent = gameState.score;
+            document.getElementById('levelComplete').style.display = 'block';
+        }
+        
+        // Create particle effect
+        function createParticles(x, y, color, count = 10) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    size: Math.random() * 4 + 2,
+                    color: color,
+                    life: 1
+                });
+            }
+        }
+        
+        // Create "67!" text particle
+        function createTextParticle(x, y, text) {
+            textParticles.push({
+                x: x,
+                y: y,
+                vy: -2, // Float upward
+                text: text,
+                life: 1,
+                size: 20
+            });
+        }
+        
+        // Shoot bullet
+        function shoot() {
+            const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+            const isRapidFire = gameState.activePowerUp === 'rapidfire';
+            bullets.push({
+                x: player.x,
+                y: player.y,
+                vx: Math.cos(angle) * bulletSpeed,
+                vy: Math.sin(angle) * bulletSpeed,
+                size: isRapidFire ? bulletSize * 1.5 : bulletSize,
+                rapidFire: isRapidFire
+            });
+        }
+        
+        // Spawn random power-up
+        function spawnPowerUp() {
+            const type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+            const x = Math.random() * (canvas.width - 100) + 50;
+            const y = Math.random() * (canvas.height - 100) + 50;
+            
+            powerUps.push({
+                x: x,
+                y: y,
+                type: type.type,
+                color: type.color,
+                emoji: type.emoji,
+                name: type.name,
+                duration: type.duration,
+                size: 20,
+                bobOffset: Math.random() * Math.PI * 2 // For floating animation
+            });
+        }
+        
+        // Activate power-up
+        function activatePowerUp(powerUp) {
+            const display = document.getElementById('powerUpDisplay');
+            const text = document.getElementById('powerUpText');
+            
+            switch(powerUp.type) {
+                case 'autofire':
+                    gameState.activePowerUp = 'autofire';
+                    gameState.powerUpTimer = powerUp.duration;
+                    gameState.autoFireTimer = 0;
+                    text.innerHTML = `${powerUp.emoji} ${powerUp.name}`;
+                    display.style.display = 'block';
+                    break;
+                case 'speed':
+                    gameState.activePowerUp = 'speed';
+                    gameState.powerUpTimer = powerUp.duration;
+                    player.speed = 8;
+                    text.innerHTML = `${powerUp.emoji} ${powerUp.name}`;
+                    display.style.display = 'block';
+                    break;
+                case 'health':
+                    player.health = Math.min(player.maxHealth, player.health + 50);
+                    createTextParticle(player.x, player.y - 30, '+50 HP!');
+                    break;
+                case 'rapidfire':
+                    gameState.activePowerUp = 'rapidfire';
+                    gameState.powerUpTimer = powerUp.duration;
+                    text.innerHTML = `${powerUp.emoji} ${powerUp.name}`;
+                    display.style.display = 'block';
+                    break;
+                case 'shield':
+                    gameState.activePowerUp = 'shield';
+                    gameState.powerUpTimer = powerUp.duration;
+                    text.innerHTML = `${powerUp.emoji} ${powerUp.name}`;
+                    display.style.display = 'block';
+                    break;
+                case 'bomb':
+                    // Kill all nearby minions and damage bosses
+                    let killed = 0;
+                    minions.forEach(minion => {
+                        if (minion.alive) {
+                            const dx = minion.x - player.x;
+                            const dy = minion.y - player.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < 300) {
+                                minion.alive = false;
+                                gameState.minionsKilled++;
+                                gameState.score += 10;
+                                createParticles(minion.x, minion.y, '#ff0000', 20);
+                                killed++;
+                            }
+                        }
+                    });
+                    
+                    // Damage bosses if nearby
+                    if (kingBoss && kingBoss.alive) {
+                        const dx = kingBoss.x - player.x;
+                        const dy = kingBoss.y - player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 300) {
+                            kingBoss.health -= 50;
+                            createParticles(kingBoss.x, kingBoss.y, '#ff0000', 30);
+                            if (kingBoss.health <= 0) {
+                                kingBoss.alive = false;
+                                gameState.score += 100;
+                                createTextParticle(kingBoss.x, kingBoss.y, 'NO MORE 67!');
+                            }
+                        }
+                    }
+                    
+                    if (queenBoss && queenBoss.alive) {
+                        const dx = queenBoss.x - player.x;
+                        const dy = queenBoss.y - player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 300) {
+                            queenBoss.health -= 50;
+                            createParticles(queenBoss.x, queenBoss.y, '#ff0000', 30);
+                            if (queenBoss.health <= 0) {
+                                queenBoss.alive = false;
+                                gameState.score += 100;
+                                createTextParticle(queenBoss.x, queenBoss.y, 'FINALLY!');
+                            }
+                        }
+                    }
+                    
+                    createTextParticle(player.x, player.y - 30, `💣 67 BOMB! ${killed} KILLED!`);
+                    break;
+            }
+        }
+        
+        // Update power-ups
+        function updatePowerUps() {
+            // Spawn new power-ups randomly (more frequent at higher levels)
+            const spawnChance = 0.0008 + (gameState.currentLevel * 0.0001);
+            if (Math.random() < spawnChance && powerUps.length < 3) {
+                spawnPowerUp();
+            }
+            
+            // Update existing power-ups
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                // Check collection
+                const dx = powerUps[i].x - player.x;
+                const dy = powerUps[i].y - player.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < player.size + powerUps[i].size) {
+                    activatePowerUp(powerUps[i]);
+                    createParticles(powerUps[i].x, powerUps[i].y, powerUps[i].color, 15);
+                    createTextParticle(powerUps[i].x, powerUps[i].y, powerUps[i].emoji + ' COLLECTED!');
+                    powerUps.splice(i, 1);
+                }
+            }
+            
+            // Update active power-up timer
+            if (gameState.powerUpTimer > 0) {
+                gameState.powerUpTimer--;
+                const timerDisplay = document.getElementById('powerUpTimer');
+                timerDisplay.textContent = `Time: ${Math.ceil(gameState.powerUpTimer / 60)}s`;
+                
+                if (gameState.powerUpTimer === 0) {
+                    // Deactivate power-up
+                    if (gameState.activePowerUp === 'speed') {
+                        player.speed = 5;
+                    }
+                    gameState.activePowerUp = null;
+                    document.getElementById('powerUpDisplay').style.display = 'none';
+                }
+            }
+            
+            // Auto-fire logic
+            if (gameState.activePowerUp === 'autofire') {
+                gameState.autoFireTimer++;
+                if (gameState.autoFireTimer >= 10) { // Fire every 10 frames
+                    shoot();
+                    gameState.autoFireTimer = 0;
+                }
+            }
+            
+            // Rapid fire (reduce delay between shots in click handler)
+        }
+        
+        // Draw power-ups
+        function drawPowerUps() {
+            powerUps.forEach(powerUp => {
+                // Floating animation
+                const bobAmount = Math.sin(animationFrame * 0.05 + powerUp.bobOffset) * 5;
+                
+                // Glow effect
+                const gradient = ctx.createRadialGradient(powerUp.x, powerUp.y + bobAmount, powerUp.size * 0.5, powerUp.x, powerUp.y + bobAmount, powerUp.size * 2);
+                gradient.addColorStop(0, powerUp.color);
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(powerUp.x, powerUp.y + bobAmount, powerUp.size * 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Main circle
+                ctx.fillStyle = powerUp.color;
+                ctx.beginPath();
+                ctx.arc(powerUp.x, powerUp.y + bobAmount, powerUp.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Emoji
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(powerUp.emoji, powerUp.x, powerUp.y + bobAmount);
+                
+                // Name label above
+                ctx.font = 'bold 12px Arial';
+                ctx.fillStyle = '#fff';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.strokeText(powerUp.name, powerUp.x, powerUp.y + bobAmount - powerUp.size - 10);
+                ctx.fillText(powerUp.name, powerUp.x, powerUp.y + bobAmount - powerUp.size - 10);
+            });
+        }
+        
+        // Update player
+        function updatePlayer() {
+            if (keys['w'] || keys['ArrowUp']) player.y -= player.speed;
+            if (keys['s'] || keys['ArrowDown']) player.y += player.speed;
+            if (keys['a'] || keys['ArrowLeft']) player.x -= player.speed;
+            if (keys['d'] || keys['ArrowRight']) player.x += player.speed;
+            
+            // Boundaries
+            player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
+            player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+            
+            // Cooldown
+            if (shootCooldown > 0) {
+                shootCooldown--;
+            }
+        }
+        
+        // Update bullets
+        function updateBullets() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].x += bullets[i].vx;
+                bullets[i].y += bullets[i].vy;
+                
+                // Remove off-screen bullets
+                if (bullets[i].x < 0 || bullets[i].x > canvas.width || 
+                    bullets[i].y < 0 || bullets[i].y > canvas.height) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                
+                // Check collision with minions
+                for (let j = minions.length - 1; j >= 0; j--) {
+                    if (!minions[j].alive) continue;
+                    
+                    const dx = bullets[i].x - minions[j].x;
+                    const dy = bullets[i].y - minions[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Wider collision for two-handed minions
+                    if (dist < minions[j].size * 1.5 + bulletSize) {
+                        minions[j].health -= 10;
+                        createParticles(bullets[i].x, bullets[i].y, '#ff6b6b', 5);
+                        bullets.splice(i, 1);
+                        
+                        if (minions[j].health <= 0) {
+                            minions[j].alive = false;
+                            gameState.minionsKilled++;
+                            gameState.score += 10;
+                            createParticles(minions[j].x, minions[j].y, '#ffdbac', 15);
+                            createTextParticle(minions[j].x, minions[j].y, '67!');
+                        }
+                        break;
+                    }
+                }
+                
+                // Check collision with bosses
+                if (bullets[i]) {
+                    if (kingBoss && kingBoss.alive) {
+                        const dx = bullets[i].x - kingBoss.x;
+                        const dy = bullets[i].y - kingBoss.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < kingBoss.size) {
+                            kingBoss.health -= 10;
+                            createParticles(bullets[i].x, bullets[i].y, '#ff00ff', 8);
+                            bullets.splice(i, 1);
+                            
+                            if (kingBoss.health <= 0) {
+                                kingBoss.alive = false;
+                                gameState.score += 100;
+                                createParticles(kingBoss.x, kingBoss.y, '#ff00ff', 30);
+                                createTextParticle(kingBoss.x, kingBoss.y, 'NO MORE 67!');
+                            }
+                            continue;
+                        }
+                    }
+                    
+                    if (queenBoss && queenBoss.alive) {
+                        const dx = bullets[i].x - queenBoss.x;
+                        const dy = bullets[i].y - queenBoss.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < queenBoss.size) {
+                            queenBoss.health -= 10;
+                            createParticles(bullets[i].x, bullets[i].y, '#ffff00', 8);
+                            bullets.splice(i, 1);
+                            
+                            if (queenBoss.health <= 0) {
+                                queenBoss.alive = false;
+                                gameState.score += 100;
+                                createParticles(queenBoss.x, queenBoss.y, '#ffff00', 30);
+                                createTextParticle(queenBoss.x, queenBoss.y, 'FINALLY!');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Update minions
+        function updateMinions() {
+            minions.forEach(minion => {
+                if (!minion.alive) return;
+                
+                // Move towards player
+                const dx = player.x - minion.x;
+                const dy = player.y - minion.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 0) {
+                    minion.x += (dx / dist) * minion.speed;
+                    minion.y += (dy / dist) * minion.speed;
+                }
+                
+                // Random chance to shout "67!" (like the annoying kids in class)
+                if (Math.random() < 0.002) { // 0.2% chance per frame
+                    createTextParticle(minion.x, minion.y - 20, '67!');
+                }
+                
+                // Check collision with player (wider for two hands)
+                if (dist < minion.size * 1.5 + player.size) {
+                    if (gameState.activePowerUp !== 'shield') {
+                        player.health -= 0.3;
+                        if (player.health <= 0) {
+                            gameOver();
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update bosses
+        function updateBosses() {
+            if (kingBoss && kingBoss.alive) {
+                const dx = player.x - kingBoss.x;
+                const dy = player.y - kingBoss.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 0) {
+                    kingBoss.x += (dx / dist) * kingBoss.speed;
+                    kingBoss.y += (dy / dist) * kingBoss.speed;
+                }
+                
+                // King shouts "67!" occasionally (more often than minions)
+                if (Math.random() < 0.005) {
+                    createTextParticle(kingBoss.x, kingBoss.y - 50, 'SIX SEVEN!');
+                }
+                
+                if (dist < kingBoss.size * 1.8 + player.size) {
+                    if (gameState.activePowerUp !== 'shield') {
+                        player.health -= 0.5;
+                        if (player.health <= 0) {
+                            gameOver();
+                        }
+                    }
+                }
+            }
+            
+            if (queenBoss && queenBoss.alive) {
+                const dx = player.x - queenBoss.x;
+                const dy = player.y - queenBoss.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 0) {
+                    queenBoss.x += (dx / dist) * queenBoss.speed;
+                    queenBoss.y += (dy / dist) * queenBoss.speed;
+                }
+                
+                // Queen shouts "67!" occasionally (more often than minions)
+                if (Math.random() < 0.005) {
+                    createTextParticle(queenBoss.x, queenBoss.y - 50, '67! 67!');
+                }
+                
+                if (dist < queenBoss.size * 1.8 + player.size) {
+                    if (gameState.activePowerUp !== 'shield') {
+                        player.health -= 0.5;
+                        if (player.health <= 0) {
+                            gameOver();
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Update particles
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].x += particles[i].vx;
+                particles[i].y += particles[i].vy;
+                particles[i].life -= 0.02;
+                particles[i].vx *= 0.98;
+                particles[i].vy *= 0.98;
+                
+                if (particles[i].life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            
+            // Update text particles
+            for (let i = textParticles.length - 1; i >= 0; i--) {
+                textParticles[i].y += textParticles[i].vy;
+                textParticles[i].life -= 0.015;
+                textParticles[i].size *= 1.02; // Grow slightly
+                
+                if (textParticles[i].life <= 0) {
+                    textParticles.splice(i, 1);
+                }
+            }
+        }
+        
+        // Check level completion
+        function checkLevelComplete() {
+            const allMinionsDefeated = minions.every(m => !m.alive);
+            const kingDefeated = !kingBoss || !kingBoss.alive;
+            const queenDefeated = !queenBoss || !queenBoss.alive;
+            
+            if (allMinionsDefeated && kingDefeated && queenDefeated) {
+                levelComplete();
+            }
+        }
+        
+        // Draw player
+        function drawPlayer() {
+            // Draw shield if active
+            if (gameState.activePowerUp === 'shield') {
+                ctx.save();
+                ctx.globalAlpha = 0.3 + Math.sin(animationFrame * 0.1) * 0.2;
+                const shieldGradient = ctx.createRadialGradient(player.x, player.y, player.size * 0.5, player.x, player.y, player.size * 2);
+                shieldGradient.addColorStop(0, '#ffff00');
+                shieldGradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = shieldGradient;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.size * 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            
+            // Draw aim line
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.stroke();
+            
+            // Draw player
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        // Draw bullets
+        function drawBullets() {
+            bullets.forEach(bullet => {
+                ctx.fillStyle = bullet.rapidFire ? '#ff6600' : '#00ffff';
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add glow for rapid fire
+                if (bullet.rapidFire) {
+                    ctx.strokeStyle = '#ff9900';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
+        }
+        
+        // Draw minions with the ACTUAL 67 gesture (TWO hands, see-saw motion)
+        function drawMinions() {
+            minions.forEach((minion, index) => {
+                if (!minion.alive) return;
+                
+                ctx.save();
+                ctx.translate(minion.x, minion.y);
+                
+                // Create alternating see-saw motion for left and right hands
+                const leftHandOffset = Math.sin(animationFrame * 0.1 + index * 0.5) * 10;
+                const rightHandOffset = Math.sin(animationFrame * 0.1 + index * 0.5 + Math.PI) * 10; // Opposite phase
+                
+                // Draw "67" text above
+                ctx.fillStyle = '#ff0000';
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.strokeText('67', 0, -minion.size * 2);
+                ctx.fillText('67', 0, -minion.size * 2);
+                
+                // Draw LEFT HAND
+                ctx.save();
+                ctx.translate(-minion.size * 0.8, leftHandOffset);
+                drawSingleHand(minion.size * 0.7);
+                ctx.restore();
+                
+                // Draw RIGHT HAND
+                ctx.save();
+                ctx.translate(minion.size * 0.8, rightHandOffset);
+                drawSingleHand(minion.size * 0.7);
+                ctx.restore();
+                
+                ctx.restore();
+                
+                // Health bar
+                const barWidth = minion.size * 3;
+                const barHeight = 4;
+                const healthPercent = minion.health / minion.maxHealth;
+                
+                ctx.fillStyle = '#000';
+                ctx.fillRect(minion.x - barWidth/2, minion.y - minion.size * 2.8, barWidth, barHeight);
+                ctx.fillStyle = '#0f0';
+                ctx.fillRect(minion.x - barWidth/2, minion.y - minion.size * 2.8, barWidth * healthPercent, barHeight);
+            });
+        }
+        
+        // Draw a single hand with palm up, fingers spread
+        function drawSingleHand(size) {
+            ctx.fillStyle = '#ffdbac';
+            ctx.strokeStyle = '#d4a574';
+            ctx.lineWidth = 2;
+            
+            // Wrist/forearm coming from below
+            ctx.beginPath();
+            ctx.ellipse(0, size * 0.6, size * 0.25, size * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Palm (horizontal, palm up)
+            ctx.beginPath();
+            ctx.ellipse(0, 0, size * 0.7, size * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Five fingers pointing upward
+            const fingers = [
+                { x: -size * 0.6, height: 0.6, width: 0.14 },  // Pinky
+                { x: -size * 0.3, height: 0.75, width: 0.15 }, // Ring
+                { x: 0, height: 0.85, width: 0.16 },           // Middle (tallest)
+                { x: size * 0.3, height: 0.75, width: 0.15 },  // Index
+                { x: size * 0.55, height: 0.55, width: 0.13 }  // Thumb (shorter, to the side)
+            ];
+            
+            fingers.forEach(finger => {
+                // Finger body
+                ctx.beginPath();
+                ctx.ellipse(finger.x, -finger.height * size * 0.5, size * finger.width, finger.height * size * 0.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Fingertip (rounded)
+                ctx.beginPath();
+                ctx.arc(finger.x, -finger.height * size, size * finger.width * 0.9, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            });
+            
+            // Palm details (creases)
+            ctx.strokeStyle = '#d4a574';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-size * 0.4, size * 0.15);
+            ctx.lineTo(size * 0.4, size * 0.15);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(-size * 0.35, size * 0.3);
+            ctx.lineTo(size * 0.35, size * 0.3);
+            ctx.stroke();
+        }
+        
+        // Draw boss
+        function drawBoss(boss) {
+            if (!boss || !boss.alive) return;
+            
+            // Glow effect
+            const gradient = ctx.createRadialGradient(boss.x, boss.y, boss.size * 0.5, boss.x, boss.y, boss.size * 2);
+            gradient.addColorStop(0, boss.color);
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(boss.x, boss.y, boss.size * 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Main body - crown shape
+            ctx.fillStyle = boss.color;
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            
+            // Draw crown
+            ctx.beginPath();
+            const points = 5;
+            for (let i = 0; i < points * 2; i++) {
+                const angle = (Math.PI * 2 * i) / (points * 2) - Math.PI / 2;
+                const radius = i % 2 === 0 ? boss.size : boss.size * 0.7;
+                const x = boss.x + Math.cos(angle) * radius;
+                const y = boss.y + Math.sin(angle) * radius;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Inner circle for contrast
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.arc(boss.x, boss.y, boss.size * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Label "67"
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 28px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.strokeText(boss.label, boss.x, boss.y - 5);
+            ctx.fillText(boss.label, boss.x, boss.y - 5);
+            
+            // Title (KING/QUEEN)
+            ctx.font = 'bold 12px Arial';
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.strokeText(boss.title, boss.x, boss.y + 15);
+            ctx.fillText(boss.title, boss.x, boss.y + 15);
+            
+            // Crown emoji on top
+            ctx.font = '24px Arial';
+            ctx.fillText('👑', boss.x, boss.y - boss.size - 20);
+            
+            // Draw 67 gesture hands floating beside the boss
+            const leftHandX = boss.x - boss.size * 1.5;
+            const rightHandX = boss.x + boss.size * 1.5;
+            const handY = boss.y + boss.size * 0.3;
+            
+            const leftOffset = Math.sin(animationFrame * 0.12) * 12;
+            const rightOffset = Math.sin(animationFrame * 0.12 + Math.PI) * 12;
+            
+            ctx.save();
+            ctx.translate(leftHandX, handY + leftOffset);
+            ctx.scale(0.6, 0.6); // Smaller hands for bosses
+            drawSingleHand(boss.size * 0.5);
+            ctx.restore();
+            
+            ctx.save();
+            ctx.translate(rightHandX, handY + rightOffset);
+            ctx.scale(0.6, 0.6);
+            drawSingleHand(boss.size * 0.5);
+            ctx.restore();
+            
+            // Health bar
+            const barWidth = boss.size * 3;
+            const barHeight = 10;
+            const healthPercent = boss.health / boss.maxHealth;
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(boss.x - barWidth/2, boss.y - boss.size - 45, barWidth, barHeight);
+            
+            // Gradient health bar
+            const healthGradient = ctx.createLinearGradient(boss.x - barWidth/2, 0, boss.x + barWidth/2, 0);
+            healthGradient.addColorStop(0, '#ff0000');
+            healthGradient.addColorStop(0.5, '#ff9900');
+            healthGradient.addColorStop(1, '#ffff00');
+            ctx.fillStyle = healthGradient;
+            ctx.fillRect(boss.x - barWidth/2, boss.y - boss.size - 45, barWidth * healthPercent, barHeight);
+            
+            // Health bar border
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(boss.x - barWidth/2, boss.y - boss.size - 45, barWidth, barHeight);
+        }
+        
+        // Draw boss warning
+        function drawBossWarning() {
+            if (gameState.bossWarningTimer <= 0 || !gameState.bossWarning) return;
+            
+            gameState.bossWarningTimer--;
+            
+            const alpha = gameState.bossWarningTimer > 90 ? 
+                (120 - gameState.bossWarningTimer) / 30 : 
+                gameState.bossWarningTimer / 90;
+            
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            
+            // Background flash
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = alpha * 0.3;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Warning text
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#ffff00';
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 8;
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            ctx.strokeText(gameState.bossWarning, canvas.width / 2, canvas.height / 2);
+            ctx.fillText(gameState.bossWarning, canvas.width / 2, canvas.height / 2);
+            
+            ctx.restore();
+        }
+        
+        // Draw particles
+        function drawParticles() {
+            particles.forEach(particle => {
+                ctx.fillStyle = particle.color;
+                ctx.globalAlpha = particle.life;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+        
+        // Draw text particles
+        function drawTextParticles() {
+            textParticles.forEach(tp => {
+                ctx.save();
+                ctx.globalAlpha = tp.life;
+                ctx.fillStyle = '#ffff00';
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = 3;
+                ctx.font = `bold ${tp.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.strokeText(tp.text, tp.x, tp.y);
+                ctx.fillText(tp.text, tp.x, tp.y);
+                ctx.restore();
+            });
+        }
+        
+        // Update UI
+        function updateUI() {
+            const levelIndex = Math.min(gameState.currentLevel - 1, levels.length - 1);
+            const levelData = levels[levelIndex];
+            
+            document.getElementById('level').innerHTML = `🎮 LEVEL ${gameState.currentLevel}<br><span style="font-size: 14px; color: #fff;">${levelData.label}</span>`;
+            document.getElementById('health').textContent = Math.max(0, Math.floor(player.health));
+            document.getElementById('healthBar').style.width = (player.health / player.maxHealth * 100) + '%';
+            document.getElementById('minionsKilled').textContent = gameState.minionsKilled;
+            document.getElementById('totalEnemies').textContent = gameState.totalMinionsThisLevel;
+            document.getElementById('score').textContent = gameState.score;
+        }
+        
+        // Leaderboard system
+        function getLeaderboard() {
+            const saved = localStorage.getItem('67worldLeaderboard');
+            return saved ? JSON.parse(saved) : [];
+        }
+        
+        function saveLeaderboard(leaderboard) {
+            localStorage.setItem('67worldLeaderboard', JSON.stringify(leaderboard));
+        }
+        
+        function showLeaderboard() {
+            const leaderboard = getLeaderboard();
+            const currentScore = gameState.score;
+            
+            // Check if current score makes the leaderboard (top 10)
+            const isHighScore = leaderboard.length < 10 || currentScore > leaderboard[leaderboard.length - 1].score;
+            
+            const list = document.getElementById('leaderboardList');
+            list.innerHTML = '';
+            
+            if (leaderboard.length === 0 && !isHighScore) {
+                list.innerHTML = '<p style="color: #aaa; padding: 20px; text-align: center;">No scores yet! Be the first to make the leaderboard! 67! 🎮</p>';
+            }
+            
+            // Show top scores
+            leaderboard.forEach((entry, index) => {
+                const div = document.createElement('div');
+                div.className = 'leaderboard-entry';
+                div.innerHTML = `
+                    <span class="rank">#${index + 1}</span>
+                    <span style="flex: 1;">${entry.name} <span style="font-size: 11px; color: #aaa;">(Lvl ${entry.level})</span></span>
+                    <span>${entry.score}</span>
+                `;
+                list.appendChild(div);
+            });
+            
+            // Show current score
+            if (isHighScore || leaderboard.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'leaderboard-entry current';
+                div.innerHTML = `
+                    <span class="rank">NEW!</span>
+                    <span style="flex: 1;">Your Score <span style="font-size: 11px; color: #aaa;">(Lvl ${gameState.currentLevel})</span></span>
+                    <span>${currentScore}</span>
+                `;
+                list.appendChild(div);
+                document.getElementById('playerName').style.display = 'block';
+                document.querySelector('button[onclick="saveScore()"]').style.display = 'inline-block';
+            } else {
+                document.getElementById('playerName').style.display = 'none';
+                document.querySelector('button[onclick="saveScore()"]').style.display = 'none';
+            }
+            
+            document.getElementById('leaderboard').style.display = 'block';
+        }
+        
+        function saveScore() {
+            const name = document.getElementById('playerName').value.trim() || 'Anonymous 67';
+            const leaderboard = getLeaderboard();
+            
+            leaderboard.push({
+                name: name,
+                score: gameState.score,
+                level: gameState.currentLevel,
+                date: new Date().toLocaleDateString()
+            });
+            
+            // Sort by score descending
+            leaderboard.sort((a, b) => b.score - a.score);
+            
+            // Keep only top 10
+            if (leaderboard.length > 10) {
+                leaderboard.length = 10;
+            }
+            
+            saveLeaderboard(leaderboard);
+            showLeaderboard();
+        }
+        
+        function closeLeaderboard() {
+            document.getElementById('leaderboard').style.display = 'none';
+        }
+        
+        // Game over
+        function gameOver() {
+            gameState.running = false;
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (!gameState.running) return;
+            
+            // Clear canvas
+            ctx.fillStyle = '#0a0e27';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Increment animation frame for 67 gesture
+            animationFrame++;
+            
+            // Update
+            updatePlayer();
+            updateBullets();
+            updateMinions();
+            updateBosses();
+            updateParticles();
+            updatePowerUps();
+            checkLevelComplete();
+            
+            // Draw
+            drawParticles();
+            drawPowerUps();
+            drawBoss(kingBoss);
+            drawBoss(queenBoss);
+            drawMinions();
+            drawBullets();
+            drawPlayer();
+            drawTextParticles();
+            drawBossWarning();
+            
+            // Update UI
+            updateUI();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Event listeners
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('click', () => {
+            if (gameState.running && shootCooldown === 0) {
+                shoot();
+                // Set cooldown based on active power-up
+                if (gameState.activePowerUp === 'rapidfire') {
+                    shootCooldown = 5; // Faster shooting
+                } else {
+                    shootCooldown = 15; // Normal shooting
+                }
+            }
+        });
+        
+        // Initialize and start game
+        initLevel();
+        gameLoop();
+    </script>
+</body>
+</html>
