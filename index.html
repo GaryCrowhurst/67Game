@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>67 World - Defeat the Kings!</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -78,6 +79,93 @@
             color: #00ffff;
             margin-bottom: 20px;
             text-transform: uppercase;
+        }
+        
+        #multiplayerMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            display: none;
+            z-index: 35;
+            border: 3px solid #ffff00;
+            max-width: 90vw;
+            width: 500px;
+        }
+        
+        #gameMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            display: block;
+            z-index: 40;
+            border: 3px solid #00ffff;
+            max-width: 90vw;
+            width: 500px;
+        }
+        
+        .room-code {
+            background: rgba(0,255,255,0.2);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            letter-spacing: 3px;
+            font-family: monospace;
+        }
+        
+        .connection-status {
+            color: #ffff00;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        .player-indicator {
+            position: absolute;
+            top: 80px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            z-index: 10;
+        }
+        
+        .menu-option {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+            width: 80%;
+            max-width: 300px;
+        }
+        
+        .menu-option:hover {
+            transform: scale(1.05);
+        }
+        
+        .menu-option.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
         
         #leaderboard {
@@ -362,6 +450,22 @@
             .level-title {
                 font-size: 28px !important;
             }
+            
+            #gameMenu, #multiplayerMenu {
+                width: 90%;
+                padding: 20px;
+            }
+            
+            .menu-option {
+                font-size: 16px;
+                padding: 15px 30px;
+                width: 90%;
+            }
+            
+            .room-code {
+                font-size: 20px;
+                padding: 12px;
+            }
         }
         
         .btn {
@@ -410,14 +514,57 @@
     <div id="gameContainer">
         <canvas id="gameCanvas" width="1000" height="700"></canvas>
         
+        <div id="gameMenu">
+            <h1 style="color: #ffff00; margin-bottom: 30px;">🎮 67 WORLD 🎮</h1>
+            <p style="font-size: 18px; margin-bottom: 30px;">Choose Your Mode!</p>
+            <button class="menu-option" onclick="startSinglePlayer()">👤 Single Player</button>
+            <button class="menu-option secondary" onclick="showMultiplayerMenu()">👥 2 Player Co-op</button>
+            <p style="font-size: 12px; color: #aaa; margin-top: 20px;">Fight the 67 Hand Army!</p>
+        </div>
+        
+        <div id="multiplayerMenu">
+            <h1 style="color: #ffff00; margin-bottom: 20px;">👥 MULTIPLAYER</h1>
+            <div id="mpMenuOptions">
+                <p style="font-size: 16px; margin-bottom: 20px;">Play with a friend online!</p>
+                <p style="font-size: 12px; color: #aaa; margin-bottom: 20px;">🌐 Works across different devices<br>No account needed!</p>
+                <button class="menu-option" onclick="hostGame()">🎯 Host Game</button>
+                <button class="menu-option" onclick="showJoinGame()">🔗 Join Game</button>
+                <button class="btn" style="margin-top: 20px;" onclick="backToMainMenu()">← Back</button>
+            </div>
+            
+            <div id="hostWaiting" style="display: none;">
+                <p style="font-size: 18px; margin-bottom: 20px;">Waiting for Player 2...</p>
+                <p style="font-size: 14px; color: #aaa; margin-bottom: 10px;">Share this room code:</p>
+                <div class="room-code" id="roomCode">----</div>
+                <p class="connection-status">🔄 Waiting for connection...</p>
+                <button class="btn" onclick="cancelHost()">Cancel</button>
+            </div>
+            
+            <div id="joinGame" style="display: none;">
+                <p style="font-size: 18px; margin-bottom: 20px;">Enter Room Code</p>
+                <input type="text" id="joinRoomCode" class="name-input" placeholder="Enter 4-digit code" maxlength="4" style="text-transform: uppercase;">
+                <p class="connection-status" id="joinStatus">Enter the host's room code</p>
+                <button class="btn" onclick="joinRoom()">Join Room</button>
+                <button class="btn" style="background: #666; margin-left: 10px;" onclick="backToMPMenu()">Cancel</button>
+            </div>
+        </div>
+        
         <div id="ui">
-            <div class="stat" style="font-size: 16px; color: #00ffff; margin-bottom: 8px;"><span id="level">1</span></div>
+            <div class="stat">🎮 Level: <span id="level">1</span></div>
             <div class="stat">❤️ Health: <span id="health">100</span></div>
             <div class="health-bar">
                 <div class="health-fill" id="healthBar" style="width: 100%"></div>
             </div>
             <div class="stat">💀 Enemies: <span id="minionsKilled">0</span> / <span id="totalEnemies">5</span></div>
             <div class="stat">🎯 Score: <span id="score">0</span></div>
+        </div>
+        
+        <div id="playerIndicator" class="player-indicator" style="display: none;">
+            <div>You: <span id="yourRole" style="color: #00ffff;">Player 1</span></div>
+            <div>Partner: <span id="partnerRole" style="color: #ff00ff;">Player 2</span></div>
+            <div style="font-size: 12px; margin-top: 5px;">
+                <span id="connectionStatus">🟢 Connected</span>
+            </div>
         </div>
         
         <div id="controls">
@@ -455,14 +602,17 @@
             <p style="font-size: 20px; margin: 20px 0;">Six Seven! 🙌</p>
             <p style="font-size: 18px;">Score: <span id="levelScore">0</span></p>
             <p style="font-size: 16px; color: #00ff00; margin-top: 10px;">+50 Health Restored</p>
+            <p id="mpLevelNote" style="font-size: 12px; color: #ffff00; display: none; margin-top: 5px;">🤝 Co-op Mode</p>
             <p style="font-size: 12px; color: #ffff00; margin-top: 10px; font-style: italic;">💡 Collect power-ups for special abilities!</p>
-            <button class="btn" onclick="nextLevel()">Next Level (Let's go 67!)</button>
+            <p id="waitingForHost" style="font-size: 14px; color: #aaa; display: none; margin-top: 10px;">Waiting for host to continue...</p>
+            <button class="btn" id="nextLevelBtn" onclick="nextLevel()">Next Level (Let's go 67!)</button>
         </div>
         
         <div id="gameOver">
             <h1>💀 67... GAME OVER! 💀</h1>
             <p style="font-size: 20px; margin: 20px 0;">The 67 Hand Army was too strong!</p>
             <p style="font-size: 16px; color: #ff6b6b;">They kept saying "six seven" until you fell...</p>
+            <p id="mpGameOverNote" style="font-size: 14px; color: #ffff00; display: none; margin-top: 10px;">🤝 Co-op Mode</p>
             <p style="font-size: 18px; margin-top: 15px;">Score: <span id="finalScore">0</span></p>
             <button class="btn" onclick="location.reload()">Try Again (67!)</button>
             <button class="btn" style="background: #ff9900; margin-left: 10px;" onclick="showLeaderboard()">View Leaderboard 🏆</button>
@@ -473,6 +623,7 @@
             <p style="font-size: 24px; margin: 20px 0; color: #ffff00;">VICTORY!</p>
             <p style="font-size: 18px;">You defeated the 67 KING and 67 QUEEN!</p>
             <p style="font-size: 16px; margin-top: 10px;">The 67 Hand Army has been defeated!</p>
+            <p id="mpVictoryNote" style="font-size: 14px; color: #ffff00; display: none; margin-top: 10px;">🤝 Co-op Victory!</p>
             <p style="font-size: 14px; font-style: italic; color: #00ffff;">No more "six seven" for today!</p>
             <p style="font-size: 22px; margin-top: 20px;">Final Score: <span id="victoryScore">0</span></p>
             <button class="btn" onclick="location.reload()">Play Again (67!)</button>
@@ -486,7 +637,7 @@
         
         // Game state
         let gameState = {
-            running: true,
+            running: false,
             score: 0,
             currentLevel: 1,
             minionsKilled: 0,
@@ -495,8 +646,26 @@
             bossWarningTimer: 0,
             activePowerUp: null,
             powerUpTimer: 0,
-            autoFireTimer: 0
+            autoFireTimer: 0,
+            mode: 'menu', // 'menu', 'singleplayer', 'multiplayer'
+            isHost: false,
+            multiplayerReady: false
         };
+        
+        // Multiplayer state
+        let peer = null;
+        let connection = null;
+        let player2 = {
+            x: 0,
+            y: 0,
+            health: 100,
+            maxHealth: 100,
+            size: 20,
+            color: '#ff00ff',
+            active: false
+        };
+        let myPlayerColor = '#00ffff';
+        let roomCode = '';
         
         // Power-ups
         const powerUps = [];
@@ -695,10 +864,20 @@
                 player.x = 100;
                 player.y = 100;
             }
+            
+            // Notify player 2 in multiplayer
+            if (gameState.mode === 'multiplayer' && gameState.isHost && connection && connection.open) {
+                sendMultiplayerData('levelInit', { level: gameState.currentLevel });
+            }
         }
         
         // Next level
         function nextLevel() {
+            // Only host can advance levels in multiplayer
+            if (gameState.mode === 'multiplayer' && !gameState.isHost) {
+                return;
+            }
+            
             gameState.currentLevel++;
             
             if (gameState.currentLevel > levels.length) {
@@ -723,6 +902,25 @@
             gameState.running = false;
             document.getElementById('levelScore').textContent = gameState.score;
             document.getElementById('levelComplete').style.display = 'block';
+            
+            // Show multiplayer note
+            if (gameState.mode === 'multiplayer') {
+                document.getElementById('mpLevelNote').style.display = 'block';
+            }
+            
+            // In multiplayer, only host can click next level
+            if (gameState.mode === 'multiplayer') {
+                if (gameState.isHost) {
+                    document.getElementById('nextLevelBtn').style.display = 'inline-block';
+                    document.getElementById('waitingForHost').style.display = 'none';
+                } else {
+                    document.getElementById('nextLevelBtn').style.display = 'none';
+                    document.getElementById('waitingForHost').style.display = 'block';
+                }
+            } else {
+                document.getElementById('nextLevelBtn').style.display = 'inline-block';
+                document.getElementById('waitingForHost').style.display = 'none';
+            }
         }
         
         // Create particle effect
@@ -756,14 +954,21 @@
         function shoot() {
             const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
             const isRapidFire = gameState.activePowerUp === 'rapidfire';
-            bullets.push({
+            const bulletData = {
                 x: player.x,
                 y: player.y,
                 vx: Math.cos(angle) * bulletSpeed,
                 vy: Math.sin(angle) * bulletSpeed,
                 size: isRapidFire ? bulletSize * 1.5 : bulletSize,
                 rapidFire: isRapidFire
-            });
+            };
+            
+            bullets.push(bulletData);
+            
+            // Send to other player
+            if (gameState.mode === 'multiplayer' && connection && connection.open) {
+                sendMultiplayerData('shoot', bulletData);
+            }
         }
         
         // Spawn random power-up
@@ -1194,7 +1399,19 @@
             const queenDefeated = !queenBoss || !queenBoss.alive;
             
             if (allMinionsDefeated && kingDefeated && queenDefeated) {
-                levelComplete();
+                // Check if this is the final level
+                if (gameState.currentLevel >= levels.length) {
+                    gameState.running = false;
+                    document.getElementById('victoryScore').textContent = gameState.score;
+                    document.getElementById('victory').style.display = 'block';
+                    
+                    // Show multiplayer indicator
+                    if (gameState.mode === 'multiplayer') {
+                        document.getElementById('mpVictoryNote').style.display = 'block';
+                    }
+                } else {
+                    levelComplete();
+                }
             }
         }
         
@@ -1215,7 +1432,7 @@
             }
             
             // Draw aim line
-            ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+            ctx.strokeStyle = myPlayerColor + '66';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(player.x, player.y);
@@ -1223,13 +1440,49 @@
             ctx.stroke();
             
             // Draw player
-            ctx.fillStyle = player.color;
+            ctx.fillStyle = myPlayerColor;
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = '#fff';
             ctx.lineWidth = 2;
             ctx.stroke();
+            
+            // Draw player label
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('YOU', player.x, player.y - player.size - 5);
+        }
+        
+        // Draw player 2 (multiplayer)
+        function drawPlayer2() {
+            if (!player2.active || gameState.mode !== 'multiplayer') return;
+            
+            // Draw player 2
+            ctx.fillStyle = player2.color;
+            ctx.beginPath();
+            ctx.arc(player2.x, player2.y, player2.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw player label
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('P2', player2.x, player2.y - player2.size - 5);
+            
+            // Health bar
+            const barWidth = player2.size * 2;
+            const barHeight = 4;
+            const healthPercent = player2.health / player2.maxHealth;
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(player2.x - barWidth/2, player2.y + player2.size + 5, barWidth, barHeight);
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(player2.x - barWidth/2, player2.y + player2.size + 5, barWidth * healthPercent, barHeight);
         }
         
         // Draw bullets
@@ -1524,12 +1777,215 @@
             const levelIndex = Math.min(gameState.currentLevel - 1, levels.length - 1);
             const levelData = levels[levelIndex];
             
-            document.getElementById('level').innerHTML = `🎮 LEVEL ${gameState.currentLevel}<br><span style="font-size: 14px; color: #fff;">${levelData.label}</span>`;
+            document.getElementById('level').innerHTML = `${gameState.currentLevel} - ${levelData.label}`;
             document.getElementById('health').textContent = Math.max(0, Math.floor(player.health));
             document.getElementById('healthBar').style.width = (player.health / player.maxHealth * 100) + '%';
             document.getElementById('minionsKilled').textContent = gameState.minionsKilled;
             document.getElementById('totalEnemies').textContent = gameState.totalMinionsThisLevel;
             document.getElementById('score').textContent = gameState.score;
+        }
+        
+        // Menu functions
+        function startSinglePlayer() {
+            document.getElementById('gameMenu').style.display = 'none';
+            gameState.mode = 'singleplayer';
+            gameState.running = true;
+            initLevel();
+            gameLoop();
+        }
+        
+        function showMultiplayerMenu() {
+            document.getElementById('gameMenu').style.display = 'none';
+            document.getElementById('multiplayerMenu').style.display = 'block';
+        }
+        
+        function backToMainMenu() {
+            document.getElementById('multiplayerMenu').style.display = 'none';
+            document.getElementById('gameMenu').style.display = 'block';
+            document.getElementById('mpMenuOptions').style.display = 'block';
+            document.getElementById('hostWaiting').style.display = 'none';
+            document.getElementById('joinGame').style.display = 'none';
+        }
+        
+        function backToMPMenu() {
+            document.getElementById('mpMenuOptions').style.display = 'block';
+            document.getElementById('joinGame').style.display = 'none';
+        }
+        
+        // Multiplayer functions
+        function generateRoomCode() {
+            return Math.random().toString(36).substring(2, 6).toUpperCase();
+        }
+        
+        function hostGame() {
+            roomCode = generateRoomCode();
+            document.getElementById('roomCode').textContent = roomCode;
+            document.getElementById('mpMenuOptions').style.display = 'none';
+            document.getElementById('hostWaiting').style.display = 'block';
+            
+            // Initialize PeerJS
+            peer = new Peer(roomCode);
+            gameState.isHost = true;
+            myPlayerColor = '#00ffff';
+            player2.color = '#ff00ff';
+            
+            peer.on('open', (id) => {
+                console.log('Host ready with ID:', id);
+            });
+            
+            peer.on('connection', (conn) => {
+                connection = conn;
+                setupConnection();
+                document.getElementById('multiplayerMenu').style.display = 'none';
+                document.getElementById('playerIndicator').style.display = 'block';
+                document.getElementById('yourRole').textContent = 'Player 1 (Host)';
+                document.getElementById('yourRole').style.color = myPlayerColor;
+                document.getElementById('partnerRole').style.color = player2.color;
+                
+                // Start game as host
+                gameState.mode = 'multiplayer';
+                gameState.multiplayerReady = true;
+                player2.active = true;
+                initLevel();
+                gameState.running = true;
+                gameLoop();
+            });
+            
+            peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                alert('Connection error! Try again.');
+                backToMainMenu();
+            });
+        }
+        
+        function showJoinGame() {
+            document.getElementById('mpMenuOptions').style.display = 'none';
+            document.getElementById('joinGame').style.display = 'block';
+        }
+        
+        function joinRoom() {
+            const code = document.getElementById('joinRoomCode').value.toUpperCase().trim();
+            if (code.length !== 4) {
+                document.getElementById('joinStatus').textContent = '❌ Please enter a 4-digit code';
+                return;
+            }
+            
+            document.getElementById('joinStatus').textContent = '🔄 Connecting...';
+            
+            // Initialize PeerJS
+            peer = new Peer();
+            gameState.isHost = false;
+            myPlayerColor = '#ff00ff';
+            player2.color = '#00ffff';
+            
+            peer.on('open', (id) => {
+                console.log('Peer ready, connecting to:', code);
+                connection = peer.connect(code);
+                setupConnection();
+            });
+            
+            peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                document.getElementById('joinStatus').textContent = '❌ Connection failed! Check code.';
+            });
+        }
+        
+        function setupConnection() {
+            connection.on('open', () => {
+                console.log('Connected!');
+                document.getElementById('multiplayerMenu').style.display = 'none';
+                document.getElementById('playerIndicator').style.display = 'block';
+                
+                if (!gameState.isHost) {
+                    document.getElementById('yourRole').textContent = 'Player 2';
+                    document.getElementById('yourRole').style.color = myPlayerColor;
+                    document.getElementById('partnerRole').textContent = 'Player 1 (Host)';
+                    document.getElementById('partnerRole').style.color = player2.color;
+                    
+                    gameState.mode = 'multiplayer';
+                    player2.active = true;
+                }
+            });
+            
+            connection.on('data', (data) => {
+                handleMultiplayerData(data);
+            });
+            
+            connection.on('close', () => {
+                console.log('Connection closed');
+                player2.active = false;
+                document.getElementById('connectionStatus').innerHTML = '🔴 Disconnected';
+                if (gameState.running) {
+                    alert('Partner disconnected! Continuing in single-player mode.');
+                }
+            });
+            
+            connection.on('error', (err) => {
+                console.error('Connection error:', err);
+            });
+        }
+        
+        function cancelHost() {
+            if (peer) peer.destroy();
+            backToMainMenu();
+        }
+        
+        function sendMultiplayerData(type, data) {
+            if (connection && connection.open) {
+                connection.send({ type, data });
+            }
+        }
+        
+        function handleMultiplayerData(message) {
+            const { type, data } = message;
+            
+            switch(type) {
+                case 'playerPos':
+                    player2.x = data.x;
+                    player2.y = data.y;
+                    player2.health = data.health;
+                    break;
+                case 'shoot':
+                    // Add bullet from other player
+                    bullets.push({
+                        x: data.x,
+                        y: data.y,
+                        vx: data.vx,
+                        vy: data.vy,
+                        size: data.size,
+                        rapidFire: data.rapidFire,
+                        fromPlayer2: !gameState.isHost
+                    });
+                    break;
+                case 'minionHit':
+                    // Sync minion damage
+                    if (minions[data.index] && minions[data.index].alive) {
+                        minions[data.index].health = data.health;
+                        if (data.health <= 0) {
+                            minions[data.index].alive = false;
+                            gameState.minionsKilled++;
+                        }
+                    }
+                    break;
+                case 'bossHit':
+                    // Sync boss damage
+                    if (data.boss === 'king' && kingBoss) {
+                        kingBoss.health = data.health;
+                        if (data.health <= 0) kingBoss.alive = false;
+                    } else if (data.boss === 'queen' && queenBoss) {
+                        queenBoss.health = data.health;
+                        if (data.health <= 0) queenBoss.alive = false;
+                    }
+                    break;
+                case 'levelInit':
+                    // Client receives level init from host
+                    if (!gameState.isHost) {
+                        gameState.running = true;
+                        initLevel();
+                        gameLoop();
+                    }
+                    break;
+            }
         }
         
         // Leaderboard system
@@ -1624,6 +2080,11 @@
             gameState.running = false;
             document.getElementById('finalScore').textContent = gameState.score;
             document.getElementById('gameOver').style.display = 'block';
+            
+            // Show multiplayer indicator
+            if (gameState.mode === 'multiplayer') {
+                document.getElementById('mpGameOverNote').style.display = 'block';
+            }
         }
         
         // Game loop
@@ -1646,6 +2107,18 @@
             updatePowerUps();
             checkLevelComplete();
             
+            // Send position data in multiplayer
+            if (gameState.mode === 'multiplayer' && connection && connection.open) {
+                // Send every 3 frames to reduce bandwidth
+                if (animationFrame % 3 === 0) {
+                    sendMultiplayerData('playerPos', {
+                        x: player.x,
+                        y: player.y,
+                        health: player.health
+                    });
+                }
+            }
+            
             // Draw
             drawParticles();
             drawPowerUps();
@@ -1653,6 +2126,7 @@
             drawBoss(queenBoss);
             drawMinions();
             drawBullets();
+            drawPlayer2(); // Draw other player
             drawPlayer();
             drawTextParticles();
             drawBossWarning();
@@ -1795,9 +2269,8 @@
             mouse.y = (touch.clientY - rect.top) * scaleY;
         });
         
-        // Initialize and start game
-        initLevel();
-        gameLoop();
+        // Initialize menu (don't start game automatically)
+        // Game starts when player selects a mode
     </script>
 </body>
 </html>
